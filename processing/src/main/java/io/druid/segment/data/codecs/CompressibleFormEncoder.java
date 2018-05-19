@@ -17,14 +17,23 @@
  * under the License.
  */
 
-package io.druid.segment.data;
+package io.druid.segment.data.codecs;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-/**
- * Serializer that produces {@link ColumnarMultiInts}.
- */
-public interface ColumnarMultiIntsSerializer extends ColumnarIntsSerializer
+public interface CompressibleFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
+    extends FormEncoder<TChunk, TChunkMetrics>
 {
-  void addValues(IndexedInts ints) throws IOException;
+  void encodeToBuffer(
+      ByteBuffer buffer,
+      TChunk values,
+      int numValues,
+      TChunkMetrics metadata
+  ) throws IOException;
+
+  default boolean shouldAttemptCompression(TChunkMetrics hints)
+  {
+    return true;
+  }
 }

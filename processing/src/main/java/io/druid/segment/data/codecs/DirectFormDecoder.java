@@ -17,14 +17,23 @@
  * under the License.
  */
 
-package io.druid.segment.data;
+package io.druid.segment.data.codecs;
 
-import java.io.IOException;
+import io.druid.segment.data.ShapeShiftingColumn;
 
-/**
- * Serializer that produces {@link ColumnarMultiInts}.
- */
-public interface ColumnarMultiIntsSerializer extends ColumnarIntsSerializer
+public interface DirectFormDecoder<TColumn extends ShapeShiftingColumn> extends FormDecoder<TColumn>
 {
-  void addValues(IndexedInts ints) throws IOException;
+  void transformBuffer(
+      TColumn column,
+      int startOffset,
+      int endOffset,
+      int numValues
+  );
+
+  void transformUnsafe(
+      TColumn column,
+      int startOffset,
+      int endOffset,
+      int numValues
+  );
 }
