@@ -17,14 +17,24 @@
  * under the License.
  */
 
-package io.druid.segment.data;
+package io.druid.segment.data.codecs;
 
-import java.io.IOException;
+import io.druid.segment.IndexSpec;
 
-/**
- * Serializer that produces {@link ColumnarMultiInts}.
- */
-public interface ColumnarMultiIntsSerializer extends ColumnarIntsSerializer
+public abstract class FormMetrics
 {
-  void addValues(IndexedInts ints) throws IOException;
+  private IndexSpec.ShapeShiftOptimizationTarget optimizationTarget;
+
+  public FormMetrics(IndexSpec.ShapeShiftOptimizationTarget optimizationTarget)
+  {
+    this.optimizationTarget = optimizationTarget;
+  }
+
+  public IndexSpec.ShapeShiftOptimizationTarget getOptimizationTarget()
+  {
+    return this.optimizationTarget;
+  }
+
+  public abstract int getNumValues();
+
 }

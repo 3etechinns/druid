@@ -17,14 +17,23 @@
  * under the License.
  */
 
-package io.druid.segment.data;
+package io.druid.segment.data.codecs;
 
-import java.io.IOException;
+import java.nio.ByteOrder;
 
-/**
- * Serializer that produces {@link ColumnarMultiInts}.
- */
-public interface ColumnarMultiIntsSerializer extends ColumnarIntsSerializer
+public abstract class BaseFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
+    implements FormEncoder<TChunk, TChunkMetrics>
 {
-  void addValues(IndexedInts ints) throws IOException;
+  protected final byte logValuesPerChunk;
+  protected final int valuesPerChunk;
+  protected final ByteOrder byteOrder;
+  protected final boolean isBigEndian;
+
+  public BaseFormEncoder(byte logValuesPerChunk, ByteOrder byteOrder)
+  {
+    this.logValuesPerChunk = logValuesPerChunk;
+    this.valuesPerChunk = 1 << logValuesPerChunk;
+    this.byteOrder = byteOrder;
+    this.isBigEndian = byteOrder.equals(ByteOrder.BIG_ENDIAN);
+  }
 }
