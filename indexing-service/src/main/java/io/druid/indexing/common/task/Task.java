@@ -51,6 +51,8 @@ import java.util.Map;
     @JsonSubTypes.Type(name = "archive", value = ArchiveTask.class),
     @JsonSubTypes.Type(name = "restore", value = RestoreTask.class),
     @JsonSubTypes.Type(name = "index", value = IndexTask.class),
+    @JsonSubTypes.Type(name = ParallelIndexSupervisorTask.TYPE, value = ParallelIndexSupervisorTask.class),
+    @JsonSubTypes.Type(name = ParallelIndexSubTask.TYPE, value = ParallelIndexSubTask.class),
     @JsonSubTypes.Type(name = "index_hadoop", value = HadoopIndexTask.class),
     @JsonSubTypes.Type(name = "hadoop_convert_segment", value = HadoopConverterTask.class),
     @JsonSubTypes.Type(name = "hadoop_convert_segment_sub", value = HadoopConverterTask.ConverterSubTask.class),

@@ -56,6 +56,7 @@ import io.druid.indexing.overlord.http.security.TaskResourceFilter;
 import io.druid.indexing.overlord.setup.WorkerBehaviorConfig;
 import io.druid.java.util.common.DateTimes;
 import io.druid.java.util.common.Intervals;
+import io.druid.java.util.common.Pair;
 import io.druid.java.util.common.StringUtils;
 import io.druid.java.util.common.logger.Logger;
 import io.druid.metadata.EntryExistsException;
@@ -242,10 +243,61 @@ public class OverlordResource
   @ResourceFilters(TaskResourceFilter.class)
   public Response getTaskStatus(@PathParam("taskid") String taskid)
   {
-    final TaskStatusResponse response = new TaskStatusResponse(
-        taskid,
-        taskStorageQueryAdapter.getStatus(taskid).orNull()
+    final Task task = taskStorageQueryAdapter.getTask(taskid).orNull();
+    final TaskStatus taskStatus = taskStorageQueryAdapter.getStatus(taskid).orNull();
+    final Pair<DateTime, String> createdDateAndDataSource = taskStorageQueryAdapter.getCreatedDateAndDataSource(
+        taskid
     );
+    TaskStatusResponse response = null;
+
+    if (task != null && taskStatus != null && createdDateAndDataSource != null) {
+      if (taskMaster.getTaskRunner().isPresent()) {
+        final TaskRunner taskRunner = taskMaster.getTaskRunner().get();
+        final TaskRunnerWorkItem workItem = taskRunner
+            .getKnownTasks()
+            .stream()
+            .filter(item -> item.getTaskId().equals(taskid))
+            .findAny()
+            .orElse(null);
+        if (workItem != null) {
+          response = new TaskStatusResponse(
+              taskid,
+              new TaskStatusPlus(
+                  taskid,
+                  task.getType(),
+                  createdDateAndDataSource.lhs,
+                  workItem.getQueueInsertionTime(),
+                  taskStatus.getStatusCode(),
+                  taskRunner.getRunnerTaskState(taskid),
+                  taskStatus.getDuration(),
+                  workItem.getLocation(),
+                  createdDateAndDataSource.rhs,
+                  null
+              )
+          );
+        }
+      }
+
+      if (response == null) {
+        response = new TaskStatusResponse(
+            taskid,
+            new TaskStatusPlus(
+                taskid,
+                task.getType(),
+                createdDateAndDataSource.lhs,
+                DateTimes.EPOCH,
+                taskStatus.getStatusCode(),
+                RunnerTaskState.WAITING,
+                taskStatus.getDuration(),
+                TaskLocation.unknown(),
+                createdDateAndDataSource.rhs,
+                null
+            )
+        );
+      }
+    } else {
+      response = new TaskStatusResponse(taskid, null);
+    }
 
     final Response.Status status = response.getStatus() == null
                                    ? Response.Status.NOT_FOUND

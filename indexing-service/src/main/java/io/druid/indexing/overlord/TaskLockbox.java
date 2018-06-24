@@ -985,8 +985,20 @@ public class TaskLockbox
 
     boolean addTask(Task task)
     {
-      Preconditions.checkArgument(taskLock.getGroupId().equals(task.getGroupId()));
-      Preconditions.checkArgument(taskLock.getPriority() == task.getPriority());
+      Preconditions.checkArgument(
+          taskLock.getGroupId().equals(task.getGroupId()),
+          "groupId[%s] of task[%s] is different from the existing lockPosse's groupId[%s]",
+          task.getGroupId(),
+          task.getId(),
+          taskLock.getGroupId()
+      );
+      Preconditions.checkArgument(
+          taskLock.getPriority() == task.getPriority(),
+          "priority[%s] of task[%s] is different from the existing lockPosse's priority[%s]",
+          task.getPriority(),
+          task.getId(),
+          taskLock.getPriority()
+      );
       return taskIds.add(task.getId());
     }
 

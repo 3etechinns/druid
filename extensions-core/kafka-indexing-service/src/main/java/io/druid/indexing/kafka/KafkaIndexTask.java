@@ -33,6 +33,7 @@ import io.druid.indexer.TaskStatus;
 import io.druid.indexing.appenderator.ActionBasedSegmentAllocator;
 import io.druid.indexing.appenderator.ActionBasedUsedSegmentChecker;
 import io.druid.indexing.common.TaskToolbox;
+import io.druid.indexing.common.actions.SegmentAllocateAction;
 import io.druid.indexing.common.actions.TaskActionClient;
 import io.druid.indexing.common.stats.RowIngestionMetersFactory;
 import io.druid.indexing.common.task.AbstractTask;
@@ -86,14 +87,11 @@ public class KafkaIndexTask extends AbstractTask implements ChatHandler
   private static final Random RANDOM = new Random();
   static final long POLL_TIMEOUT = 100;
   static final long LOCK_ACQUIRE_TIMEOUT_SECONDS = 15;
-  private static final String METADATA_NEXT_PARTITIONS = "nextPartitions";
-  private static final String METADATA_PUBLISH_PARTITIONS = "publishPartitions";
 
   private final DataSchema dataSchema;
   private final InputRowParser<ByteBuffer> parser;
   private final KafkaTuningConfig tuningConfig;
   private final KafkaIOConfig ioConfig;
-  private final AuthorizerMapper authorizerMapper;
   private final Optional<ChatHandlerProvider> chatHandlerProvider;
   private final KafkaIndexTaskRunner runner;
 
@@ -126,7 +124,6 @@ public class KafkaIndexTask extends AbstractTask implements ChatHandler
     this.tuningConfig = Preconditions.checkNotNull(tuningConfig, "tuningConfig");
     this.ioConfig = Preconditions.checkNotNull(ioConfig, "ioConfig");
     this.chatHandlerProvider = Optional.fromNullable(chatHandlerProvider);
-    this.authorizerMapper = authorizerMapper;
     final CircularBuffer<Throwable> savedParseExceptions;
     if (tuningConfig.getMaxSavedParseExceptions() > 0) {
       savedParseExceptions = new CircularBuffer<>(tuningConfig.getMaxSavedParseExceptions());
@@ -264,7 +261,19 @@ public class KafkaIndexTask extends AbstractTask implements ChatHandler
   {
     return new StreamAppenderatorDriver(
         appenderator,
-        new ActionBasedSegmentAllocator(toolbox.getTaskActionClient(), dataSchema),
+        new ActionBasedSegmentAllocator(
+            toolbox.getTaskActionClient(),
+            dataSchema,
+            (schema, row, sequenceName, previousSegmentId, skipSegmentLineageCheck) -> new SegmentAllocateAction(
+                schema.getDataSource(),
+                row.getTimestamp(),
+                schema.getGranularitySpec().getQueryGranularity(),
+                schema.getGranularitySpec().getSegmentGranularity(),
+                sequenceName,
+                previousSegmentId,
+                skipSegmentLineageCheck
+            )
+        ),
         toolbox.getSegmentHandoffNotifierFactory(),
         new ActionBasedUsedSegmentChecker(toolbox.getTaskActionClient()),
         toolbox.getDataSegmentKiller(),

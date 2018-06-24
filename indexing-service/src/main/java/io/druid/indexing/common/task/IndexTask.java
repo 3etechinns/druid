@@ -50,6 +50,7 @@ import io.druid.indexing.common.TaskRealtimeMetricsMonitorBuilder;
 import io.druid.indexing.common.TaskReport;
 import io.druid.indexer.TaskStatus;
 import io.druid.indexing.common.TaskToolbox;
+import io.druid.indexing.common.actions.SegmentAllocateAction;
 import io.druid.indexing.common.actions.SegmentTransactionalInsertAction;
 import io.druid.indexing.common.actions.TaskActionClient;
 import io.druid.indexing.common.stats.RowIngestionMeters;
@@ -776,8 +777,7 @@ public class IndexTask extends AbstractTask implements ChatHandler
           }
 
           determinePartitionsMeters.incrementUnparseable();
-          if (determinePartitionsMeters.getUnparseable() > ingestionSchema.getTuningConfig()
-                                                                                       .getMaxParseExceptions()) {
+          if (determinePartitionsMeters.getUnparseable() > ingestionSchema.getTuningConfig().getMaxParseExceptions()) {
             throw new RuntimeException("Max parse exceptions exceeded, terminating task...");
           }
         }
@@ -830,7 +830,7 @@ public class IndexTask extends AbstractTask implements ChatHandler
       final TaskToolbox toolbox,
       final DataSchema dataSchema,
       final ShardSpecs shardSpecs,
-      Map<Interval, String> versions,
+      final Map<Interval, String> versions,
       final FirehoseFactory firehoseFactory,
       final File firehoseTempDir
   ) throws IOException, InterruptedException
@@ -884,7 +884,19 @@ public class IndexTask extends AbstractTask implements ChatHandler
       segmentAllocator = (row, sequenceName, previousSegmentId, skipSegmentLineageCheck) -> lookup.get(sequenceName);
     } else if (ioConfig.isAppendToExisting()) {
       // Append mode: Allocate segments as needed using Overlord APIs.
-      segmentAllocator = new ActionBasedSegmentAllocator(toolbox.getTaskActionClient(), dataSchema);
+      segmentAllocator = new ActionBasedSegmentAllocator(
+          toolbox.getTaskActionClient(),
+          dataSchema,
+          (schema, row, sequenceName, previousSegmentId, skipSegmentLineageCheck) -> new SegmentAllocateAction(
+              schema.getDataSource(),
+              row.getTimestamp(),
+              schema.getGranularitySpec().getQueryGranularity(),
+              schema.getGranularitySpec().getSegmentGranularity(),
+              sequenceName,
+              previousSegmentId,
+              skipSegmentLineageCheck
+          )
+      );
     } else {
       // Overwrite mode, non-guaranteed rollup: We can make up our own segment ids but we don't know them in advance.
       final Map<Interval, AtomicInteger> counters = new HashMap<>();
@@ -1368,12 +1380,16 @@ public class IndexTask extends AbstractTask implements ChatHandler
         this.maxParseExceptions = 0;
         this.maxSavedParseExceptions = maxSavedParseExceptions == null ? 0 : Math.min(1, maxSavedParseExceptions);
       } else {
-        this.maxParseExceptions = maxParseExceptions == null ? TuningConfig.DEFAULT_MAX_PARSE_EXCEPTIONS : maxParseExceptions;
+        this.maxParseExceptions = maxParseExceptions == null ?
+                                  TuningConfig.DEFAULT_MAX_PARSE_EXCEPTIONS :
+                                  maxParseExceptions;
         this.maxSavedParseExceptions = maxSavedParseExceptions == null
                                         ? TuningConfig.DEFAULT_MAX_SAVED_PARSE_EXCEPTIONS
                                         : maxSavedParseExceptions;
       }
-      this.logParseExceptions = logParseExceptions == null ? TuningConfig.DEFAULT_LOG_PARSE_EXCEPTIONS : logParseExceptions;
+      this.logParseExceptions = logParseExceptions == null ?
+                                TuningConfig.DEFAULT_LOG_PARSE_EXCEPTIONS :
+                                logParseExceptions;
     }
 
     private static Integer initializeTargetPartitionSize(Integer numShards, Integer targetPartitionSize)
