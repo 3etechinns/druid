@@ -41,6 +41,7 @@ public interface IndexedInts extends HotLoopCallee
 
   @CalledFromHotLoop
   int size();
+
   @CalledFromHotLoop
   int get(int index);
 

@@ -158,9 +158,23 @@ public enum CompressionStrategy
   public interface Decompressor
   {
     /**
-     * Implementations of this method are expected to call out.flip() after writing to the output buffer
+     * Decompress data starting from {@code in.position()} to {@code out}. Implementations of this method are
+     * expected to call {@code out.flip()} after writing to the output buffer.
+     * @param in        input buffer
+     * @param numBytes  number of bytes to read
+     * @param out       destination buffer for decompressed data
      */
     void decompress(ByteBuffer in, int numBytes, ByteBuffer out);
+
+    /**
+     * Decompress data starting from offset specified by {@code inOffset} of {@code in} to {@code out}. Implementations
+     * of this method are expected to call {@code out.flip()} after writing to the output buffer.
+     * @param in        input buffer
+     * @param inOffset  input buffer start position
+     * @param numBytes  number of bytes to read
+     * @param out       destination buffer for decompressed data
+     */
+    void decompress(ByteBuffer in, int inOffset, int numBytes, ByteBuffer out);
   }
 
   public abstract static class Compressor
@@ -171,7 +185,7 @@ public enum CompressionStrategy
      *
      * If the allocated buffer is a direct buffer, it should be registered to be freed with the given Closer.
      */
-    ByteBuffer allocateInBuffer(int inputSize, Closer closer)
+    public ByteBuffer allocateInBuffer(int inputSize, Closer closer)
     {
       return ByteBuffer.allocate(inputSize);
     }
@@ -184,7 +198,7 @@ public enum CompressionStrategy
      *
      * If the allocated buffer is a direct buffer, it should be registered to be freed with the given Closer.
      */
-    abstract ByteBuffer allocateOutBuffer(int inputSize, Closer closer);
+    public abstract ByteBuffer allocateOutBuffer(int inputSize, Closer closer);
 
     /**
      * Returns a ByteBuffer with compressed contents of in between it's position and limit. It may be the provided out
@@ -202,7 +216,7 @@ public enum CompressionStrategy
     private static final UncompressedCompressor defaultCompressor = new UncompressedCompressor();
 
     @Override
-    ByteBuffer allocateOutBuffer(int inputSize, Closer closer)
+    public ByteBuffer allocateOutBuffer(int inputSize, Closer closer)
     {
       return ByteBuffer.allocate(inputSize);
     }
@@ -227,6 +241,16 @@ public enum CompressionStrategy
       in.position(in.position() + numBytes);
     }
 
+    @Override
+    public void decompress(ByteBuffer in, int inOffset, int numBytes, ByteBuffer out)
+    {
+      final ByteBuffer view = in.asReadOnlyBuffer();
+      view.position(inOffset);
+      final ByteBuffer copyBuffer = view.slice().duplicate();
+      copyBuffer.limit(copyBuffer.position() + numBytes);
+      out.put(copyBuffer).flip();
+      in.position(in.position() + numBytes); // todo: idk what to do here.. this method was introduced to not care about underlying buffer position
+    }
   }
 
   public static class LZFDecompressor implements Decompressor
@@ -238,6 +262,25 @@ public enum CompressionStrategy
     {
       final byte[] bytes = new byte[numBytes];
       in.get(bytes);
+
+      try (final ResourceHolder<byte[]> outputBytesHolder = CompressedPools.getOutputBytes()) {
+        final byte[] outputBytes = outputBytesHolder.get();
+        final int numDecompressedBytes = LZFDecoder.decode(bytes, outputBytes);
+        out.put(outputBytes, 0, numDecompressedBytes);
+        out.flip();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void decompress(ByteBuffer in, int inOffset, int numBytes, ByteBuffer out)
+    {
+      final byte[] bytes = new byte[numBytes];
+      for (int i = 0, pos = inOffset; i < numBytes; i++, pos++) {
+        bytes[i] = in.get(pos);
+      }
 
       try (final ResourceHolder<byte[]> outputBytesHolder = CompressedPools.getOutputBytes()) {
         final byte[] outputBytes = outputBytesHolder.get();
@@ -302,6 +345,19 @@ public enum CompressionStrategy
       out.limit(out.position() + numDecompressedBytes);
     }
 
+    @Override
+    public void decompress(ByteBuffer in, int inOffset, int numBytes, ByteBuffer out)
+    {
+      final int numDecompressedBytes = lz4Safe.decompress(
+          in,
+          inOffset,
+          numBytes,
+          out,
+          out.position(),
+          out.remaining()
+      );
+      out.limit(out.position() + numDecompressedBytes);
+    }
   }
 
   public static class LZ4Compressor extends Compressor
@@ -310,7 +366,7 @@ public enum CompressionStrategy
     private static final net.jpountz.lz4.LZ4Compressor lz4High = LZ4Factory.fastestInstance().highCompressor();
 
     @Override
-    ByteBuffer allocateInBuffer(int inputSize, Closer closer)
+    public ByteBuffer allocateInBuffer(int inputSize, Closer closer)
     {
       ByteBuffer inBuffer = ByteBuffer.allocateDirect(inputSize);
       closer.register(() -> ByteBufferUtils.free(inBuffer));
@@ -318,7 +374,7 @@ public enum CompressionStrategy
     }
 
     @Override
-    ByteBuffer allocateOutBuffer(int inputSize, Closer closer)
+    public ByteBuffer allocateOutBuffer(int inputSize, Closer closer)
     {
       ByteBuffer outBuffer = ByteBuffer.allocateDirect(lz4High.maxCompressedLength(inputSize));
       closer.register(() -> ByteBufferUtils.free(outBuffer));
