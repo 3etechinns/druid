@@ -16,37 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package io.druid.query.filter;
 
-package io.druid.common.guava;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.util.concurrent.Callable;
-
-/**
- */
-public abstract class ThreadRenamingCallable<T> implements Callable<T>
+public class AndDimFilterTest
 {
-  private final String name;
-
-  public ThreadRenamingCallable(
-      String name
-  )
+  @Test
+  public void testGetRequiredColumns()
   {
-    this.name = name;
+    AndDimFilter andDimFilter = new AndDimFilter(
+        Lists.newArrayList(
+            new SelectorDimFilter("a", "d", null),
+            new SelectorDimFilter("b", "d", null),
+            new SelectorDimFilter("c", "d", null)
+        )
+    );
+    Assert.assertEquals(andDimFilter.getRequiredColumns(), Sets.newHashSet("a", "b", "c"));
   }
-
-  @Override
-  public final T call() throws Exception
-  {
-    final Thread currThread = Thread.currentThread();
-    String currName = currThread.getName();
-    try {
-      currThread.setName(name);
-      return doCall();
-    }
-    finally {
-      currThread.setName(currName);
-    }
-  }
-
-  public abstract T doCall() throws Exception;
 }
