@@ -19,9 +19,10 @@
 
 package io.druid.segment.data;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Materialized version of outer buffer contents of a {@link ShapeShiftingColumn}, extracting all header information
@@ -29,22 +30,24 @@ import java.nio.ByteOrder;
  * {@link ShapeShiftingColumn} objects.
  *
  * layout:
- * | version (byte) | numChunks (int) | numValues (int) | logValuesPerChunk (byte) | decodeStrategy (byte) | offsetsSize (int) | offsets | values |
+ * | version (byte) | headerSize (int) | numValues (int) | numChunks (int) | logValuesPerChunk (byte) | offsetsSize (int) |  compositionSize (int) | composition | offsets | values |
  */
 public class ShapeShiftingColumnData
 {
-  private final int numChunks;
+  private final int headerSize;
   private final int numValues;
+  private final int numChunks;
   private final byte logValuesPerChunk;
   private final byte logBytesPerValue;
-  private final byte decodeStrategy;
+  private final int compositionSize;
+  private final Map<Byte, Integer> composition;
   private final int offsetsSize;
   private final ByteBuffer baseBuffer;
   private final ByteOrder byteOrder;
 
   public ShapeShiftingColumnData(ByteBuffer buffer, byte logBytesPerValue, ByteOrder byteOrder)
   {
-    this(buffer, logBytesPerValue, byteOrder, null, false);
+    this(buffer, logBytesPerValue, byteOrder, false);
   }
 
   public ShapeShiftingColumnData(
@@ -54,30 +57,28 @@ public class ShapeShiftingColumnData
       boolean moveSourceBufferPosition
   )
   {
-    this(buffer, logBytesPerValue, byteOrder, null, moveSourceBufferPosition);
-  }
-
-  public ShapeShiftingColumnData(
-      ByteBuffer buffer,
-      byte logBytesPerValue,
-      ByteOrder byteOrder,
-      @Nullable Byte overrideDecodingStrategy,
-      boolean moveSourceBufferPosition
-  )
-  {
-    this.logBytesPerValue = logBytesPerValue;
     ByteBuffer ourBuffer = buffer.slice().order(byteOrder);
-    this.numChunks = ourBuffer.getInt(1);
+    this.byteOrder = byteOrder;
+    this.logBytesPerValue = logBytesPerValue;
+    this.headerSize = ourBuffer.getInt(1);
     this.numValues = ourBuffer.getInt(1 + Integer.BYTES);
-    this.logValuesPerChunk = ourBuffer.get(1 + 2 * Integer.BYTES);
-    this.decodeStrategy = overrideDecodingStrategy == null
-                          ? ourBuffer.get(1 + (2 * Integer.BYTES) + 1)
-                          : overrideDecodingStrategy;
-    this.offsetsSize = ourBuffer.getInt(1 + (2 * Integer.BYTES) + 1 + 1);
+    this.numChunks = ourBuffer.getInt(1 + (2 * Integer.BYTES));
+    this.logValuesPerChunk = ourBuffer.get(1 + (3 * Integer.BYTES));
+    this.offsetsSize = ourBuffer.getInt(1 + (3 * Integer.BYTES) + 1);
+    this.compositionSize = ourBuffer.getInt(1 + (3 * Integer.BYTES) + 1 + Integer.BYTES);
+
+    int compositionOffset = 1 + (3 * Integer.BYTES) + 1 + (2 * Integer.BYTES);
+    this.composition = new HashMap<>();
+    // 5 bytes per composition entry
+    for (int i = 0; i < compositionSize; i += 5) {
+      byte header = ourBuffer.get(compositionOffset + i);
+      int count = ourBuffer.getInt(compositionOffset + i + 1);
+      composition.put(header, count);
+    }
 
     ourBuffer.limit(
-        ShapeShiftingColumnarIntsSerializer.HEADER_BYTES + offsetsSize +
-        ourBuffer.getInt(ShapeShiftingColumnarIntsSerializer.HEADER_BYTES + (numChunks * Integer.BYTES))
+        getValueChunksStartOffset() +
+        ourBuffer.getInt(getOffsetsStartOffset() + (numChunks * Integer.BYTES))
     );
 
     if (moveSourceBufferPosition) {
@@ -85,21 +86,22 @@ public class ShapeShiftingColumnData
     }
 
     this.baseBuffer = ourBuffer.slice().order(byteOrder);
-    this.byteOrder = byteOrder;
   }
 
-
   /**
-   * Number of 'chunks' of values this column is divided into
+   * Total 'header' size, to future proof by allowing us to always be able to find offsets and values sections offsets,
+   * but stuffing any additional data into the header.
+   *
    * @return
    */
-  public int getNumChunks()
+  public int getHeaderSize()
   {
-    return numChunks;
+    return headerSize;
   }
 
   /**
    * Total number of rows in this column
+   *
    * @return
    */
   public int getNumValues()
@@ -108,7 +110,18 @@ public class ShapeShiftingColumnData
   }
 
   /**
+   * Number of 'chunks' of values this column is divided into
+   *
+   * @return
+   */
+  public int getNumChunks()
+  {
+    return numChunks;
+  }
+
+  /**
    * log base 2 max number of values per chunk
+   *
    * @return
    */
   public byte getLogValuesPerChunk()
@@ -118,6 +131,7 @@ public class ShapeShiftingColumnData
 
   /**
    * log base 2 number of bytes per value
+   *
    * @return
    */
   public byte getLogBytesPerValue()
@@ -126,16 +140,8 @@ public class ShapeShiftingColumnData
   }
 
   /**
-   * Decoding strategy, to allow optimizing for particular chunk forms
-   * @return
-   */
-  public byte getDecodeStrategy()
-  {
-    return decodeStrategy;
-  }
-
-  /**
    * Size in bytes of chunk offset data
+   *
    * @return
    */
   public int getOffsetsSize()
@@ -144,7 +150,50 @@ public class ShapeShiftingColumnData
   }
 
   /**
+   * Size in bytes of composition data
+   *
+   * @return
+   */
+  public int getCompositionSize()
+  {
+    return compositionSize;
+  }
+
+  /**
+   * Get composition of codecs used in column and their counts, allowing column suppliers to optimize at query time.
+   * Note that 'compressed' blocks are counted twice, once as compression and once as inner codec, so the total
+   * count here may not match {@link ShapeShiftingColumnData#numChunks}
+   *
+   * @return
+   */
+  public Map<Byte, Integer> getComposition()
+  {
+    return composition;
+  }
+
+  /**
+   * Start offset of {@link ShapeShiftingColumnData#baseBuffer} for the 'chunk offsets' section
+   *
+   * @return
+   */
+  public int getOffsetsStartOffset()
+  {
+    return headerSize;
+  }
+
+  /**
+   * Start offset of {@link ShapeShiftingColumnData#baseBuffer} for the 'chunk values' section
+   *
+   * @return
+   */
+  public int getValueChunksStartOffset()
+  {
+    return headerSize + offsetsSize;
+  }
+
+  /**
    * {@link ByteBuffer} View of column data, sliced from underlying mapped segment smoosh buffer.
+   *
    * @return
    */
   public ByteBuffer getBaseBuffer()
@@ -154,6 +203,7 @@ public class ShapeShiftingColumnData
 
   /**
    * Column byte order
+   *
    * @return
    */
   public ByteOrder getByteOrder()

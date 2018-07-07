@@ -20,7 +20,6 @@
 package io.druid.segment.data.codecs;
 
 import io.druid.segment.data.CompressionStrategy;
-import io.druid.segment.data.codecs.ints.IntCodecs;
 import io.druid.segment.writeout.WriteOutBytes;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ import java.nio.ByteOrder;
  * @param <TChunk>
  * @param <TChunkMetrics>
  */
-public class CompressedFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
+public abstract class CompressedFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
     extends BaseFormEncoder<TChunk, TChunkMetrics>
 {
   private final CompressibleFormEncoder<TChunk, TChunkMetrics> formEncoder;
@@ -104,27 +103,9 @@ public class CompressedFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
   }
 
   @Override
-  public byte getHeader()
-  {
-    return IntCodecs.COMPRESSED;
-  }
-
-  @Override
   public String getName()
   {
     return compressionStrategy.toString() + "-" + formEncoder.getName();
-  }
-
-  @Override
-  public boolean hasDirectAccessSupport()
-  {
-    return formEncoder.hasDirectAccessSupport();
-  }
-
-  @Override
-  public boolean preferDirectAccess()
-  {
-    return formEncoder.preferDirectAccess();
   }
 
   @Override
@@ -139,5 +120,10 @@ public class CompressedFormEncoder<TChunk, TChunkMetrics extends FormMetrics>
       default:
         return formEncoder.getSpeedModifier(metrics) + 0.05;
     }
+  }
+
+  public FormEncoder<TChunk, TChunkMetrics> getInnerEncoder()
+  {
+    return formEncoder;
   }
 }
