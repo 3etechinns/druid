@@ -32,6 +32,7 @@ import io.druid.client.selector.ServerSelector;
 import io.druid.client.selector.TierSelectorStrategy;
 import io.druid.java.util.common.Intervals;
 import io.druid.java.util.common.guava.Sequence;
+import io.druid.java.util.common.guava.Sequences;
 import io.druid.query.DataSource;
 import io.druid.query.Druids;
 import io.druid.query.Query;
@@ -59,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  */
@@ -76,6 +78,21 @@ public class CachingClusteredClientFunctionalityTest
   {
     timeline = new VersionedIntervalTimeline<>(Ordering.<String>natural());
     serverView = EasyMock.createNiceMock(TimelineServerView.class);
+
+    final QueryRunner<Object> emptyQueryRunner = EasyMock.createStrictMock(QueryRunner.class);
+
+    EasyMock.expect(
+        emptyQueryRunner.run(EasyMock.anyObject(), EasyMock.anyObject())
+    ).andReturn(
+        Sequences.empty()
+    ).anyTimes();
+    EasyMock.expect(
+        serverView.getQueryRunner(EasyMock.anyObject())
+    ).andReturn(
+        emptyQueryRunner
+    ).anyTimes();
+
+    EasyMock.replay(serverView, emptyQueryRunner);
     cache = MapCache.create(100000);
     client = makeClient(
         new ForegroundCachePopulator(CachingClusteredClientTest.jsonMapper, new CachePopulatorStats(), -1)
@@ -275,7 +292,8 @@ public class CachingClusteredClientFunctionalityTest
           {
             return mergeLimit;
           }
-        }
+        },
+        ForkJoinPool.commonPool()
     );
   }
 
