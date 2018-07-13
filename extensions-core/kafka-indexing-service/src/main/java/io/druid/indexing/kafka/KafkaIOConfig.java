@@ -34,7 +34,8 @@ public class KafkaIOConfig implements IOConfig
   private static final boolean DEFAULT_USE_TRANSACTION = true;
   private static final boolean DEFAULT_SKIP_OFFSET_GAPS = false;
 
-  private final int taskGroupId;
+  @Nullable
+  private final Integer taskGroupId;
   private final String baseSequenceName;
   private final KafkaPartitions startPartitions;
   private final KafkaPartitions endPartitions;
@@ -87,8 +88,9 @@ public class KafkaIOConfig implements IOConfig
     }
   }
 
+  @Nullable
   @JsonProperty
-  public int getTaskGroupId()
+  public Integer getTaskGroupId()
   {
     return taskGroupId;
   }
