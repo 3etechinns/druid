@@ -1,18 +1,18 @@
 /*
- * Licensed to Metamarkets Group Inc. (Metamarkets) under one
- * or more contributor license agreements. See the NOTICE file
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership. Metamarkets licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
+ * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
  */
@@ -85,7 +85,8 @@ public class RunLengthBytePackedIntFormEncoder extends CompressibleIntFormEncode
     final byte numBytesBytepack = BytePackedIntFormEncoder.getNumBytesForMax(metrics.getMaxValue());
     final int bytepackSize = numBytesBytepack * numValues;
     final int projectedSize = projectSize(metrics);
-    if (projectedSize > bytepackSize) {
+
+    if (!metrics.isEnableEncoderOptOut() && projectedSize > bytepackSize) {
       return Integer.MAX_VALUE;
     }
     return projectedSize;
@@ -184,6 +185,10 @@ public class RunLengthBytePackedIntFormEncoder extends CompressibleIntFormEncode
   @Override
   public boolean shouldAttemptCompression(IntFormMetrics hints)
   {
+    if (!hints.isEnableEncoderOptOut()) {
+      return true;
+    }
+
     // if not very many runs, cheese it out of here since i am expensive-ish
     // todo: this is totally scientific. 100%. If we don't have at least 3/4 runs, then bail on trying compression since expensive
     if ((hints.getOptimizationTarget() != IndexSpec.ShapeShiftOptimizationTarget.SMALLER) &&
