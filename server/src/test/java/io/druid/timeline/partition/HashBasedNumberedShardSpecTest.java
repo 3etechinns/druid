@@ -34,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class HashBasedNumberedShardSpecTest
@@ -80,7 +81,7 @@ public class HashBasedNumberedShardSpecTest
   @Test
   public void testPartitionChunks()
   {
-    final List<ShardSpec> specs = ImmutableList.<ShardSpec>of(
+    final List<ShardSpec> specs = ImmutableList.of(
         new HashBasedNumberedShardSpec(0, 3, null, ServerTestHelper.MAPPER),
         new HashBasedNumberedShardSpec(1, 3, null, ServerTestHelper.MAPPER),
         new HashBasedNumberedShardSpec(2, 3, null, ServerTestHelper.MAPPER)
@@ -153,9 +154,9 @@ public class HashBasedNumberedShardSpecTest
     final InputRow inputRow = new MapBasedInputRow(
         time,
         ImmutableList.of("visitor_id", "cnt"),
-        ImmutableMap.<String, Object>of("visitor_id", "v1", "cnt", 10)
+        ImmutableMap.of("visitor_id", "v1", "cnt", 10)
     );
-    Assert.assertEquals(ImmutableList.of(Lists.newArrayList("v1")), shardSpec1.getGroupKey(time.getMillis(), inputRow));
+    Assert.assertEquals(ImmutableList.of(Collections.singletonList("v1")), shardSpec1.getGroupKey(time.getMillis(), inputRow));
 
     final HashBasedNumberedShardSpec shardSpec2 = new HashBasedNumberedShardSpec(
         1,
@@ -167,9 +168,9 @@ public class HashBasedNumberedShardSpecTest
         time.getMillis(),
         ImmutableMap.of(
             "cnt",
-            Lists.newArrayList(10),
+            Collections.singletonList(10),
             "visitor_id",
-            Lists.newArrayList("v1")
+            Collections.singletonList("v1")
         )
     ).toString(), shardSpec2.getGroupKey(time.getMillis(), inputRow).toString());
   }

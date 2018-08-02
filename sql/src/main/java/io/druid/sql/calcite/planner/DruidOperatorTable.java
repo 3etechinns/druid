@@ -37,11 +37,13 @@ import io.druid.sql.calcite.expression.AliasedOperatorConversion;
 import io.druid.sql.calcite.expression.BinaryOperatorConversion;
 import io.druid.sql.calcite.expression.DirectOperatorConversion;
 import io.druid.sql.calcite.expression.SqlOperatorConversion;
+import io.druid.sql.calcite.expression.UnaryFunctionOperatorConversion;
 import io.druid.sql.calcite.expression.UnaryPrefixOperatorConversion;
 import io.druid.sql.calcite.expression.UnarySuffixOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.BTrimOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.CastOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.CeilOperatorConversion;
+import io.druid.sql.calcite.expression.builtin.ConcatOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.DateTruncOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.ExtractOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.FloorOperatorConversion;
@@ -52,6 +54,7 @@ import io.druid.sql.calcite.expression.builtin.RegexpExtractOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.ReinterpretOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.StrposOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.SubstringOperatorConversion;
+import io.druid.sql.calcite.expression.builtin.TextcatOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.TimeArithmeticOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.TimeExtractOperatorConversion;
 import io.druid.sql.calcite.expression.builtin.TimeFloorOperatorConversion;
@@ -117,8 +120,8 @@ public class DruidOperatorTable implements SqlOperatorTable
           .add(new DirectOperatorConversion(SqlStdOperatorTable.UPPER, "upper"))
           .add(new UnaryPrefixOperatorConversion(SqlStdOperatorTable.NOT, "!"))
           .add(new UnaryPrefixOperatorConversion(SqlStdOperatorTable.UNARY_MINUS, "-"))
-          .add(new UnarySuffixOperatorConversion(SqlStdOperatorTable.IS_NULL, "== ''"))
-          .add(new UnarySuffixOperatorConversion(SqlStdOperatorTable.IS_NOT_NULL, "!= ''"))
+          .add(new UnaryFunctionOperatorConversion(SqlStdOperatorTable.IS_NULL, "isnull"))
+          .add(new UnaryFunctionOperatorConversion(SqlStdOperatorTable.IS_NOT_NULL, "notnull"))
           .add(new UnarySuffixOperatorConversion(SqlStdOperatorTable.IS_FALSE, "<= 0")) // Matches Evals.asBoolean
           .add(new UnarySuffixOperatorConversion(SqlStdOperatorTable.IS_NOT_TRUE, "<= 0")) // Matches Evals.asBoolean
           .add(new UnarySuffixOperatorConversion(SqlStdOperatorTable.IS_TRUE, "> 0")) // Matches Evals.asBoolean
@@ -146,6 +149,8 @@ public class DruidOperatorTable implements SqlOperatorTable
           .add(new RegexpExtractOperatorConversion())
           .add(new StrposOperatorConversion())
           .add(new SubstringOperatorConversion())
+          .add(new ConcatOperatorConversion())
+          .add(new TextcatOperatorConversion())
           .add(new AliasedOperatorConversion(new SubstringOperatorConversion(), "SUBSTR"))
           .add(new TimeArithmeticOperatorConversion.TimeMinusIntervalOperatorConversion())
           .add(new TimeArithmeticOperatorConversion.TimePlusIntervalOperatorConversion())

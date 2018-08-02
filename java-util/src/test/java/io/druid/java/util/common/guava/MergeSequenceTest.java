@@ -26,7 +26,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
 
 /**
  */
@@ -130,7 +132,7 @@ public class MergeSequenceTest
   public void testMergeEmpties1() throws Exception
   {
     final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
-        TestSequence.<Integer>create(),
+        TestSequence.create(),
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(2, 8),
         TestSequence.create(4, 6, 8)
@@ -165,9 +167,9 @@ public class MergeSequenceTest
     final ArrayList<TestSequence<Integer>> testSeqs = Lists.newArrayList(
         TestSequence.create(1, 3, 5, 7, 9),
         TestSequence.create(2, 8),
-        TestSequence.<Integer>create(),
+        TestSequence.create(),
         TestSequence.create(4, 6, 8),
-        TestSequence.<Integer>create()
+        TestSequence.create()
     );
 
     final List<Integer> expected = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 8, 9);
@@ -226,35 +228,31 @@ public class MergeSequenceTest
   public void testHierarchicalMerge() throws Exception
   {
     final Sequence<Integer> seq1 = new MergeSequence<>(
-        Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
-        Lists.<Sequence<Integer>>newArrayList(
-            TestSequence.create(1)
-        )
+        Ordering.natural(), Sequences.simple(
+        Collections.singletonList(TestSequence.create(1))
     )
     );
 
     final Sequence<Integer> finalMerged = new MergeSequence<>(
-        Ordering.<Integer>natural(),
+        Ordering.natural(),
         Sequences.simple(
-            Lists.<Sequence<Integer>>newArrayList(seq1)
+            Collections.singletonList(seq1)
         )
     );
 
-    SequenceTestHelper.testAll(finalMerged, Arrays.asList(1));
+    SequenceTestHelper.testAll(finalMerged, Collections.singletonList(1));
   }
 
   @Test
   public void testMergeOne() throws Exception
   {
     final Sequence<Integer> mergeOne = new MergeSequence<>(
-        Ordering.<Integer>natural(), Sequences.<Sequence<Integer>>simple(
-        Lists.<Sequence<Integer>>newArrayList(
-            TestSequence.create(1)
-        )
+        Ordering.natural(), Sequences.simple(
+        Collections.singletonList(TestSequence.create(1))
     )
     );
 
-    SequenceTestHelper.testAll(mergeOne, Arrays.asList(1));
+    SequenceTestHelper.testAll(mergeOne, Collections.singletonList(1));
   }
 
 }

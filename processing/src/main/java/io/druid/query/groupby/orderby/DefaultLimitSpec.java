@@ -30,6 +30,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import io.druid.common.config.NullHandling;
 import io.druid.data.input.Row;
 import io.druid.java.util.common.ISE;
 import io.druid.java.util.common.granularity.Granularities;
@@ -94,7 +95,7 @@ public class DefaultLimitSpec implements LimitSpec
       @JsonProperty("limit") Integer limit
   )
   {
-    this.columns = (columns == null) ? ImmutableList.<OrderByColumnSpec>of() : columns;
+    this.columns = (columns == null) ? ImmutableList.of() : columns;
     this.limit = (limit == null) ? Integer.MAX_VALUE : limit;
 
     Preconditions.checkArgument(this.limit > 0, "limit[%s] must be >0", limit);
@@ -269,12 +270,26 @@ public class DefaultLimitSpec implements LimitSpec
 
   private Ordering<Row> metricOrdering(final String column, final Comparator comparator)
   {
-    return Ordering.from(Comparator.comparing((Row row) -> row.getRaw(column), Comparator.nullsLast(comparator)));
+    // As per SQL standard we need to have same ordering for metrics as dimensions i.e nulls first
+    // If SQL compatibility is not enabled we use nullsLast ordering for null metrics for backwards compatibility.
+    if (NullHandling.sqlCompatible()) {
+      return Ordering.from(Comparator.comparing((Row row) -> row.getRaw(column), Comparator.nullsFirst(comparator)));
+    } else {
+      return Ordering.from(Comparator.comparing((Row row) -> row.getRaw(column), Comparator.nullsLast(comparator)));
+    }
   }
 
   private Ordering<Row> dimensionOrdering(final String dimension, final StringComparator comparator)
   {
-    return Ordering.from(Comparator.comparing((Row row) -> row.getDimension(dimension).isEmpty() ? null : row.getDimension(dimension).get(0), Comparator.nullsFirst(comparator)));
+    return Ordering.from(
+        Comparator.comparing((Row row) -> getDimensionValue(row, dimension), Comparator.nullsFirst(comparator))
+    );
+  }
+
+  private static String getDimensionValue(Row row, String column)
+  {
+    List<String> values = row.getDimension(column);
+    return values.isEmpty() ? null : values.get(0);
   }
 
   @Override

@@ -48,6 +48,7 @@ import org.junit.Test;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
@@ -630,7 +631,7 @@ public class QueryGranularityTest
     final DateTime baseTime = DateTimes.of("2011-01-01T00:00:00.000Z");
 
     assertSameInterval(
-        Lists.newArrayList(baseTime),
+        Collections.singletonList(baseTime),
         Granularities.ALL.getIterable(new Interval(baseTime, baseTime.plus(Days.days(3))))
     );
   }
@@ -641,7 +642,7 @@ public class QueryGranularityTest
     final DateTime baseTime = DateTimes.of("2011-01-01T09:38:02.992Z");
 
     assertSameInterval(
-        Lists.newArrayList(baseTime),
+        Collections.singletonList(baseTime),
         Granularities.ALL.getIterable(new Interval(baseTime, baseTime.plus(Days.days(3))))
     );
   }
@@ -754,7 +755,7 @@ public class QueryGranularityTest
   public void testMerge()
   {
     Assert.assertNull(Granularity.mergeGranularities(null));
-    Assert.assertNull(Granularity.mergeGranularities(ImmutableList.<Granularity>of()));
+    Assert.assertNull(Granularity.mergeGranularities(ImmutableList.of()));
     Assert.assertNull(Granularity.mergeGranularities(Lists.newArrayList(null, Granularities.DAY)));
     Assert.assertNull(Granularity.mergeGranularities(Lists.newArrayList(Granularities.DAY, null)));
     Assert.assertNull(

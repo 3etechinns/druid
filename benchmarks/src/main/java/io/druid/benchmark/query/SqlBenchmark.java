@@ -31,10 +31,8 @@ import io.druid.java.util.common.guava.Sequence;
 import io.druid.java.util.common.logger.Logger;
 import io.druid.query.QueryPlus;
 import io.druid.query.QueryRunnerFactoryConglomerate;
-import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.dimension.DefaultDimensionSpec;
-import io.druid.query.dimension.DimensionSpec;
 import io.druid.query.groupby.GroupByQuery;
 import io.druid.segment.QueryableIndex;
 import io.druid.server.security.AuthTestUtils;
@@ -64,7 +62,6 @@ import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -124,13 +121,8 @@ public class SqlBenchmark
         .builder()
         .setDataSource("foo")
         .setInterval(Intervals.ETERNITY)
-        .setDimensions(
-            Arrays.<DimensionSpec>asList(
-                new DefaultDimensionSpec("dimZipf", "d0"),
-                new DefaultDimensionSpec("dimSequential", "d1")
-            )
-        )
-        .setAggregatorSpecs(Arrays.<AggregatorFactory>asList(new CountAggregatorFactory("c")))
+        .setDimensions(new DefaultDimensionSpec("dimZipf", "d0"), new DefaultDimensionSpec("dimSequential", "d1"))
+        .setAggregatorSpecs(new CountAggregatorFactory("c"))
         .setGranularity(Granularities.ALL)
         .build();
 

@@ -21,7 +21,6 @@ package io.druid.query.lookup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import io.druid.jackson.DefaultObjectMapper;
 import io.druid.query.extraction.MapLookupExtractor;
 import org.junit.Assert;
@@ -52,9 +51,9 @@ public class LookupExtractorTest
       "value1",
       Arrays.asList("key1", "key-1"),
       "value2",
-      Arrays.asList("key2"),
+      Collections.singletonList("key2"),
       "emptyString",
-      Arrays.asList("")
+      Collections.singletonList("")
   );
   LookupExtractor lookupExtractor = new MapLookupExtractor(EXPECTED_MAP, false);
 
@@ -80,7 +79,7 @@ public class LookupExtractorTest
   @Test
   public void testApplyAllWithEmptySet()
   {
-    Assert.assertEquals(Collections.emptyMap(), lookupExtractor.applyAll(Collections.<String>emptySet()));
+    Assert.assertEquals(Collections.emptyMap(), lookupExtractor.applyAll(Collections.emptySet()));
   }
 
   @Test
@@ -88,7 +87,7 @@ public class LookupExtractorTest
   {
     Map<String, String> expected = new HashMap<>();
     expected.put("not there", null);
-    Assert.assertEquals(expected, lookupExtractor.applyAll(Lists.newArrayList("not there")));
+    Assert.assertEquals(expected, lookupExtractor.applyAll(Collections.singletonList("not there")));
   }
 
   @Test
@@ -100,7 +99,7 @@ public class LookupExtractorTest
   @Test
   public void testunapplyAllWithEmptySet()
   {
-    Assert.assertEquals(Collections.emptyMap(), lookupExtractor.unapplyAll(Collections.<String>emptySet()));
+    Assert.assertEquals(Collections.emptyMap(), lookupExtractor.unapplyAll(Collections.emptySet()));
   }
 
   @Test

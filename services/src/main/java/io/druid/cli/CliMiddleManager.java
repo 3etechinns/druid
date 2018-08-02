@@ -81,7 +81,7 @@ public class CliMiddleManager extends ServerRunnable
   @Override
   protected List<? extends Module> getModules()
   {
-    return ImmutableList.<Module>of(
+    return ImmutableList.of(
         new Module()
         {
           @Override
@@ -99,10 +99,7 @@ public class CliMiddleManager extends ServerRunnable
             binder.bind(TaskRunner.class).to(ForkingTaskRunner.class);
             binder.bind(ForkingTaskRunner.class).in(LazySingleton.class);
 
-            binder.bind(IndexingServiceClient.class).toProvider(Providers.of(null));
-            binder.bind(new TypeLiteral<IndexTaskClientFactory<ParallelIndexTaskClient>>(){})
-                  .toProvider(Providers.of(null));
-            binder.bind(ChatHandlerProvider.class).toProvider(Providers.<ChatHandlerProvider>of(null));
+            binder.bind(ChatHandlerProvider.class).toProvider(Providers.of(null));
             PolyBind.createChoice(
                 binder,
                 "druid.indexer.task.rowIngestionMeters.type",

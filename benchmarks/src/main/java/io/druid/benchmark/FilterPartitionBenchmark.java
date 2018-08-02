@@ -21,12 +21,12 @@ package io.druid.benchmark;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import io.druid.benchmark.datagen.BenchmarkDataGenerator;
 import io.druid.benchmark.datagen.BenchmarkSchemaInfo;
 import io.druid.benchmark.datagen.BenchmarkSchemas;
+import io.druid.common.config.NullHandling;
 import io.druid.data.input.InputRow;
 import io.druid.hll.HyperLogLogHash;
 import io.druid.jackson.DefaultObjectMapper;
@@ -360,8 +360,8 @@ public class FilterPartitionBenchmark
   public void readOrFilter(Blackhole blackhole)
   {
     Filter filter = new NoBitmapSelectorFilter("dimSequential", "199");
-    Filter filter2 = new AndFilter(Arrays.<Filter>asList(new SelectorFilter("dimMultivalEnumerated2", "Corundum"), new NoBitmapSelectorFilter("dimMultivalEnumerated", "Bar")));
-    Filter orFilter = new OrFilter(Arrays.<Filter>asList(filter, filter2));
+    Filter filter2 = new AndFilter(Arrays.asList(new SelectorFilter("dimMultivalEnumerated2", "Corundum"), new NoBitmapSelectorFilter("dimMultivalEnumerated", "Bar")));
+    Filter orFilter = new OrFilter(Arrays.asList(filter, filter2));
 
     StorageAdapter sa = new QueryableIndexStorageAdapter(qIndex);
     Sequence<Cursor> cursors = makeCursors(sa, orFilter);
@@ -374,8 +374,8 @@ public class FilterPartitionBenchmark
   public void readOrFilterCNF(Blackhole blackhole)
   {
     Filter filter = new NoBitmapSelectorFilter("dimSequential", "199");
-    Filter filter2 = new AndFilter(Arrays.<Filter>asList(new SelectorFilter("dimMultivalEnumerated2", "Corundum"), new NoBitmapSelectorFilter("dimMultivalEnumerated", "Bar")));
-    Filter orFilter = new OrFilter(Arrays.<Filter>asList(filter, filter2));
+    Filter filter2 = new AndFilter(Arrays.asList(new SelectorFilter("dimMultivalEnumerated2", "Corundum"), new NoBitmapSelectorFilter("dimMultivalEnumerated", "Bar")));
+    Filter orFilter = new OrFilter(Arrays.asList(filter, filter2));
 
     StorageAdapter sa = new QueryableIndexStorageAdapter(qIndex);
     Sequence<Cursor> cursors = makeCursors(sa, Filters.convertToCNF(orFilter));
@@ -387,27 +387,27 @@ public class FilterPartitionBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void readComplexOrFilter(Blackhole blackhole)
   {
-    DimFilter dimFilter1 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter1 = new OrDimFilter(Arrays.asList(
         new SelectorDimFilter("dimSequential", "199", null),
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Corundum", null),
             new SelectorDimFilter("dimMultivalEnumerated", "Bar", null)
         )
         ))
     );
-    DimFilter dimFilter2 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter2 = new OrDimFilter(Arrays.asList(
         new SelectorDimFilter("dimSequential", "299", null),
         new SelectorDimFilter("dimSequential", "399", null),
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Xylophone", null),
             new SelectorDimFilter("dimMultivalEnumerated", "Foo", null)
         )
         ))
     );
-    DimFilter dimFilter3 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter3 = new OrDimFilter(Arrays.asList(
         dimFilter1,
         dimFilter2,
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Orange", null),
             new SelectorDimFilter("dimMultivalEnumerated", "World", null)
         )
@@ -424,27 +424,27 @@ public class FilterPartitionBenchmark
   @OutputTimeUnit(TimeUnit.MICROSECONDS)
   public void readComplexOrFilterCNF(Blackhole blackhole)
   {
-    DimFilter dimFilter1 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter1 = new OrDimFilter(Arrays.asList(
         new SelectorDimFilter("dimSequential", "199", null),
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Corundum", null),
             new SelectorDimFilter("dimMultivalEnumerated", "Bar", null)
         )
         ))
     );
-    DimFilter dimFilter2 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter2 = new OrDimFilter(Arrays.asList(
         new SelectorDimFilter("dimSequential", "299", null),
         new SelectorDimFilter("dimSequential", "399", null),
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Xylophone", null),
             new SelectorDimFilter("dimMultivalEnumerated", "Foo", null)
         )
         ))
     );
-    DimFilter dimFilter3 = new OrDimFilter(Arrays.<DimFilter>asList(
+    DimFilter dimFilter3 = new OrDimFilter(Arrays.asList(
         dimFilter1,
         dimFilter2,
-        new AndDimFilter(Arrays.<DimFilter>asList(
+        new AndDimFilter(Arrays.asList(
             new NoBitmapSelectorDimFilter("dimMultivalEnumerated2", "Orange", null),
             new SelectorDimFilter("dimMultivalEnumerated", "World", null)
         )
@@ -557,7 +557,7 @@ public class FilterPartitionBenchmark
       if (extractionFn == null) {
         return new NoBitmapSelectorFilter(dimension, value);
       } else {
-        final String valueOrNull = Strings.emptyToNull(value);
+        final String valueOrNull = NullHandling.emptyToNullIfNeeded(value);
 
         final DruidPredicateFactory predicateFactory = new DruidPredicateFactory()
         {

@@ -24,10 +24,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import io.druid.query.Query;
-import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.DoubleMaxAggregatorFactory;
 import io.druid.query.aggregation.DoubleMinAggregatorFactory;
-import io.druid.query.aggregation.PostAggregator;
 import io.druid.query.dimension.ExtractionDimensionSpec;
 import io.druid.query.dimension.LegacyDimensionSpec;
 import io.druid.query.extraction.MapLookupExtractor;
@@ -38,7 +36,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 
 import static io.druid.query.QueryRunnerTestHelper.addRowsIndexConstant;
 import static io.druid.query.QueryRunnerTestHelper.allGran;
@@ -64,7 +62,7 @@ public class TopNQueryTest
         .threshold(4)
         .intervals(fullOnInterval)
         .aggregators(
-            Lists.<AggregatorFactory>newArrayList(
+            Lists.newArrayList(
                 Iterables.concat(
                     commonDoubleAggregators,
                     Lists.newArrayList(
@@ -74,7 +72,7 @@ public class TopNQueryTest
                 )
             )
         )
-        .postAggregators(Arrays.<PostAggregator>asList(addRowsIndexConstant))
+        .postAggregators(Collections.singletonList(addRowsIndexConstant))
         .build();
 
     String json = jsonMapper.writeValueAsString(query);
@@ -101,7 +99,7 @@ public class TopNQueryTest
         .threshold(2)
         .intervals(fullOnInterval.getIntervals())
         .aggregators(
-            Lists.<AggregatorFactory>newArrayList(
+            Lists.newArrayList(
                 Iterables.concat(
                     commonDoubleAggregators,
                     Lists.newArrayList(
@@ -126,7 +124,7 @@ public class TopNQueryTest
         .metric(new DimensionTopNMetricSpec(null, StringComparators.ALPHANUMERIC))
         .threshold(2)
         .intervals(fullOnInterval.getIntervals())
-        .aggregators(Lists.<AggregatorFactory>newArrayList(rowsCount))
+        .aggregators(Collections.singletonList(rowsCount))
         .build();
     String jsonQuery = "{\n"
                        + "  \"queryType\": \"topN\",\n"

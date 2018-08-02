@@ -24,7 +24,6 @@ import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import io.druid.benchmark.datagen.BenchmarkDataGenerator;
@@ -55,7 +54,6 @@ import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
 import io.druid.query.aggregation.hyperloglog.HyperUniquesSerde;
 import io.druid.query.dimension.DefaultDimensionSpec;
-import io.druid.query.dimension.DimensionSpec;
 import io.druid.query.groupby.GroupByQuery;
 import io.druid.query.groupby.GroupByQueryConfig;
 import io.druid.query.groupby.GroupByQueryEngine;
@@ -181,10 +179,7 @@ public class GroupByTypeInterfaceBenchmark
       GroupByQuery queryString = GroupByQuery
           .builder()
           .setDataSource("blah")
-          .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("dimSequential", null)
-          ))
+          .setQuerySegmentSpec(intervalSpec).setDimensions(new DefaultDimensionSpec("dimSequential", null))
           .setAggregatorSpecs(
               queryAggs
           )
@@ -195,10 +190,8 @@ public class GroupByTypeInterfaceBenchmark
           .builder()
           .setDataSource("blah")
           .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("metLongUniform", null),
-              new DefaultDimensionSpec("metFloatNormal", null)
-          ))
+          .setDimensions(new DefaultDimensionSpec("metLongUniform", null),
+                         new DefaultDimensionSpec("metFloatNormal", null))
           .setAggregatorSpecs(
               queryAggs
           )
@@ -208,10 +201,7 @@ public class GroupByTypeInterfaceBenchmark
       GroupByQuery queryLong = GroupByQuery
           .builder()
           .setDataSource("blah")
-          .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("metLongUniform", null)
-          ))
+          .setQuerySegmentSpec(intervalSpec).setDimensions(new DefaultDimensionSpec("metLongUniform", null))
           .setAggregatorSpecs(
               queryAggs
           )
@@ -221,10 +211,7 @@ public class GroupByTypeInterfaceBenchmark
       GroupByQuery queryFloat = GroupByQuery
           .builder()
           .setDataSource("blah")
-          .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("metFloatNormal", null)
-          ))
+          .setQuerySegmentSpec(intervalSpec).setDimensions(new DefaultDimensionSpec("metFloatNormal", null))
           .setAggregatorSpecs(
               queryAggs
           )
@@ -249,10 +236,7 @@ public class GroupByTypeInterfaceBenchmark
           .builder()
           .setDataSource("blah")
           .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("dimSequential", null),
-              new DefaultDimensionSpec("dimZipf", null)
-          ))
+          .setDimensions(new DefaultDimensionSpec("dimSequential", null), new DefaultDimensionSpec("dimZipf", null))
           .setAggregatorSpecs(
               queryAggs
           )
@@ -262,10 +246,7 @@ public class GroupByTypeInterfaceBenchmark
       GroupByQuery queryA = GroupByQuery
           .builder()
           .setDataSource(subqueryA)
-          .setQuerySegmentSpec(intervalSpec)
-          .setDimensions(Lists.<DimensionSpec>newArrayList(
-              new DefaultDimensionSpec("dimSequential", null)
-          ))
+          .setQuerySegmentSpec(intervalSpec).setDimensions(new DefaultDimensionSpec("dimSequential", null))
           .setAggregatorSpecs(
               queryAggs
           )

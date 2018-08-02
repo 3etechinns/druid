@@ -21,13 +21,11 @@ package io.druid.query;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.druid.data.input.impl.DimensionsSpec;
 import io.druid.data.input.impl.InputRowParser;
 import io.druid.data.input.impl.JSONParseSpec;
 import io.druid.data.input.impl.MapInputRowParser;
-import io.druid.data.input.impl.SpatialDimensionSchema;
 import io.druid.data.input.impl.TimestampSpec;
 import io.druid.java.util.common.DateTimes;
 import io.druid.java.util.common.Intervals;
@@ -71,6 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +100,7 @@ public class DoubleStorageTest
   {
     return ScanQuery.newScanQueryBuilder()
                     .dataSource(new TableDataSource(QueryRunnerTestHelper.dataSource))
-                    .columns(Arrays.<String>asList())
+                    .columns(Collections.emptyList())
                     .intervals(QueryRunnerTestHelper.fullOnInterval)
                     .limit(Integer.MAX_VALUE)
                     .legacy(false);
@@ -125,7 +124,7 @@ public class DoubleStorageTest
           new DimensionsSpec(
               DimensionsSpec.getDefaultSchemas(ImmutableList.of(DIM_NAME)),
               ImmutableList.of(DIM_FLOAT_NAME),
-              ImmutableList.<SpatialDimensionSchema>of()
+              ImmutableList.of()
           ),
           null,
           null
@@ -273,7 +272,7 @@ public class DoubleStorageTest
                                                       .build();
     List<SegmentAnalysis> results = runner.run(QueryPlus.wrap(segmentMetadataQuery), Maps.newHashMap()).toList();
 
-    Assert.assertEquals(Arrays.asList(expectedSegmentAnalysis), results);
+    Assert.assertEquals(Collections.singletonList(expectedSegmentAnalysis), results);
 
   }
 
@@ -300,7 +299,7 @@ public class DoubleStorageTest
         ImmutableList.of(TIME_COLUMN, DIM_NAME, DIM_FLOAT_NAME),
         getStreamOfEvents().collect(Collectors.toList())
     );
-    List<ScanResultValue> expectedResults = Lists.newArrayList(expectedScanResult);
+    List<ScanResultValue> expectedResults = Collections.singletonList(expectedScanResult);
     ScanQueryRunnerTest.verify(expectedResults, results);
   }
 

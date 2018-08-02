@@ -44,7 +44,6 @@ import io.druid.query.Query;
 import static io.druid.query.QueryRunnerTestHelper.allGran;
 import io.druid.query.QueryToolChestWarehouse;
 import io.druid.query.QueryWatcher;
-import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
 import io.druid.query.spec.MultipleIntervalSegmentSpec;
 import io.druid.query.topn.TopNQuery;
@@ -64,6 +63,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -145,7 +145,7 @@ public class DatasourceOptimizerTest extends CuratorTestBase
     metadataStorageCoordinator.insertDataSourceMetadata(dataSource, metadata);
     // insert base datasource segments 
     List<Boolean> baseResult = Lists.transform(
-        ImmutableList.<String>of(
+        ImmutableList.of(
             "2011-04-01/2011-04-02",
             "2011-04-02/2011-04-03",
             "2011-04-03/2011-04-04",
@@ -172,7 +172,7 @@ public class DatasourceOptimizerTest extends CuratorTestBase
     );
     // insert derivative segments
     List<Boolean> derivativeResult = Lists.transform(
-        ImmutableList.<String>of(
+        ImmutableList.of(
             "2011-04-01/2011-04-02",
             "2011-04-02/2011-04-03",
             "2011-04-03/2011-04-04"
@@ -204,9 +204,7 @@ public class DatasourceOptimizerTest extends CuratorTestBase
         .threshold(4)
         .intervals("2011-04-01/2011-04-06")
         .aggregators(
-            Lists.<AggregatorFactory>newArrayList(
-                new LongSumAggregatorFactory("cost", "cost")
-            )
+            Collections.singletonList(new LongSumAggregatorFactory("cost", "cost"))
         )
         .build();
     
@@ -217,11 +215,9 @@ public class DatasourceOptimizerTest extends CuratorTestBase
             .dimension("dim1")
             .metric("cost")
             .threshold(4)
-            .intervals(new MultipleIntervalSegmentSpec(Lists.newArrayList(Intervals.of("2011-04-01/2011-04-04"))))
+            .intervals(new MultipleIntervalSegmentSpec(Collections.singletonList(Intervals.of("2011-04-01/2011-04-04"))))
             .aggregators(
-                Lists.<AggregatorFactory>newArrayList(
-                    new LongSumAggregatorFactory("cost", "cost")
-                )
+                Collections.singletonList(new LongSumAggregatorFactory("cost", "cost"))
             )
             .build(),
         new TopNQueryBuilder()
@@ -230,11 +226,9 @@ public class DatasourceOptimizerTest extends CuratorTestBase
             .dimension("dim1")
             .metric("cost")
             .threshold(4)
-            .intervals(new MultipleIntervalSegmentSpec(Lists.newArrayList(Intervals.of("2011-04-04/2011-04-06"))))
+            .intervals(new MultipleIntervalSegmentSpec(Collections.singletonList(Intervals.of("2011-04-04/2011-04-06"))))
             .aggregators(
-                Lists.<AggregatorFactory>newArrayList(
-                    new LongSumAggregatorFactory("cost", "cost")
-                )
+                Collections.singletonList(new LongSumAggregatorFactory("cost", "cost"))
             )
             .build()
     );
@@ -248,7 +242,7 @@ public class DatasourceOptimizerTest extends CuratorTestBase
         .dataSource(name)
         .interval(Intervals.of(intervalStr))
         .loadSpec(
-            ImmutableMap.<String, Object>of(
+            ImmutableMap.of(
                 "type",
                 "local",
                 "path",
@@ -257,7 +251,7 @@ public class DatasourceOptimizerTest extends CuratorTestBase
         )
         .version(version)
         .dimensions(dims)
-        .metrics(ImmutableList.<String>of("cost"))
+        .metrics(ImmutableList.of("cost"))
         .shardSpec(NoneShardSpec.instance())
         .binaryVersion(9)
         .size(size)

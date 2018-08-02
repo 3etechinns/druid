@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import io.druid.indexer.hadoop.DatasourceIngestionSpec;
 import io.druid.indexer.hadoop.WindowedDataSegment;
 import io.druid.indexer.path.DatasourcePathSpec;
@@ -45,6 +44,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -73,7 +73,7 @@ public class HadoopIngestionSpecUpdateDatasourcePathSpecSegmentsTest
       testDatasource,
       Intervals.of("2000/3000"),
       "ver",
-      ImmutableMap.<String, Object>of(
+      ImmutableMap.of(
           "type", "local",
           "path", "/tmp/index1.zip"
       ),
@@ -88,7 +88,7 @@ public class HadoopIngestionSpecUpdateDatasourcePathSpecSegmentsTest
       testDatasource2,
       Intervals.of("2000/3000"),
       "ver2",
-      ImmutableMap.<String, Object>of(
+      ImmutableMap.of(
           "type", "local",
           "path", "/tmp/index2.zip"
       ),
@@ -137,7 +137,7 @@ public class HadoopIngestionSpecUpdateDatasourcePathSpecSegmentsTest
             testDatasource,
             testDatasourceInterval,
             null,
-            ImmutableList.<DataSegment>of(SEGMENT),
+            ImmutableList.of(SEGMENT),
             null,
             null,
             null,
@@ -167,7 +167,7 @@ public class HadoopIngestionSpecUpdateDatasourcePathSpecSegmentsTest
             testDatasource,
             testDatasourceInterval,
             null,
-            ImmutableList.<DataSegment>of(SEGMENT.withVersion("v2")),
+            ImmutableList.of(SEGMENT.withVersion("v2")),
             null,
             null,
             null,
@@ -307,14 +307,14 @@ public class HadoopIngestionSpecUpdateDatasourcePathSpecSegmentsTest
     EasyMock.expect(
         segmentLister.getUsedSegmentsForIntervals(
             testDatasource,
-            Lists.newArrayList(jobInterval != null ? jobInterval.overlap(testDatasourceInterval) : null)
+            Collections.singletonList(jobInterval != null ? jobInterval.overlap(testDatasourceInterval) : null)
         )
     ).andReturn(ImmutableList.of(SEGMENT));
 
     EasyMock.expect(
         segmentLister.getUsedSegmentsForIntervals(
             testDatasource2,
-            Lists.newArrayList(jobInterval != null ? jobInterval.overlap(testDatasourceInterval2) : null)
+            Collections.singletonList(jobInterval != null ? jobInterval.overlap(testDatasourceInterval2) : null)
         )
     ).andReturn(ImmutableList.of(SEGMENT2));
 

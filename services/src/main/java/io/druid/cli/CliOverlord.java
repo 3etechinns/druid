@@ -148,7 +148,7 @@ public class CliOverlord extends ServerRunnable
 
   protected List<? extends Module> getModules(final boolean standalone)
   {
-    return ImmutableList.<Module>of(
+    return ImmutableList.of(
         new Module()
         {
           @Override
@@ -188,9 +188,6 @@ public class CliOverlord extends ServerRunnable
             binder.bind(IndexerMetadataStorageAdapter.class).in(LazySingleton.class);
             binder.bind(SupervisorManager.class).in(LazySingleton.class);
 
-            binder.bind(IndexingServiceClient.class).toProvider(Providers.of(null));
-            binder.bind(new TypeLiteral<IndexTaskClientFactory<ParallelIndexTaskClient>>(){})
-                  .toProvider(Providers.of(null));
             binder.bind(ChatHandlerProvider.class).toProvider(Providers.of(null));
 
             PolyBind.createChoice(
@@ -361,14 +358,13 @@ public class CliOverlord extends ServerRunnable
       final ObjectMapper jsonMapper = injector.getInstance(Key.get(ObjectMapper.class, Json.class));
       final AuthenticatorMapper authenticatorMapper = injector.getInstance(AuthenticatorMapper.class);
 
-      List<Authenticator> authenticators = null;
       AuthenticationUtils.addSecuritySanityCheckFilter(root, jsonMapper);
 
       // perform no-op authorization for these resources
       AuthenticationUtils.addNoopAuthorizationFilters(root, UNSECURED_PATHS);
       AuthenticationUtils.addNoopAuthorizationFilters(root, authConfig.getUnsecuredPaths());
 
-      authenticators = authenticatorMapper.getAuthenticatorChain();
+      final List<Authenticator> authenticators = authenticatorMapper.getAuthenticatorChain();
       AuthenticationUtils.addAuthenticationFilterChain(root, authenticators);
 
       AuthenticationUtils.addAllowOptionsFilter(root, authConfig.isAllowUnauthenticatedHttpOptions());

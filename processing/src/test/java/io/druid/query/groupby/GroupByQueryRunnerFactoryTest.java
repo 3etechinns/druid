@@ -21,7 +21,6 @@ package io.druid.query.groupby;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.druid.data.input.Row;
 import io.druid.data.input.impl.CSVParseSpec;
@@ -38,7 +37,6 @@ import io.druid.query.QueryRunner;
 import io.druid.query.QueryRunnerFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.dimension.DefaultDimensionSpec;
-import io.druid.query.dimension.DimensionSpec;
 import io.druid.query.spec.LegacySegmentSpec;
 import io.druid.segment.CloserRule;
 import io.druid.segment.IncrementalIndexSegment;
@@ -49,7 +47,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -68,8 +65,8 @@ public class GroupByQueryRunnerFactoryTest
         .setDataSource("xx")
         .setQuerySegmentSpec(new LegacySegmentSpec("1970/3000"))
         .setGranularity(Granularities.ALL)
-        .setDimensions(Lists.<DimensionSpec>newArrayList(new DefaultDimensionSpec("tags", "tags")))
-        .setAggregatorSpecs(Collections.singletonList(new CountAggregatorFactory("count")))
+        .setDimensions(new DefaultDimensionSpec("tags", "tags"))
+        .setAggregatorSpecs(new CountAggregatorFactory("count"))
         .build();
 
     final QueryRunnerFactory factory = GroupByQueryRunnerTest.makeQueryRunnerFactory(new GroupByQueryConfig());

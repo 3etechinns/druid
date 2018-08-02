@@ -22,6 +22,7 @@ package io.druid.segment.filter;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.druid.common.config.NullHandling;
 import io.druid.data.input.InputRow;
 import io.druid.data.input.impl.DimensionsSpec;
 import io.druid.data.input.impl.InputRowParser;
@@ -56,12 +57,12 @@ public class LikeFilterTest extends BaseFilterTest
   );
 
   private static final List<InputRow> ROWS = ImmutableList.of(
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "0", "dim1", "")).get(0),
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "1", "dim1", "foo")).get(0),
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "2", "dim1", "foobar")).get(0),
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "3", "dim1", "bar")).get(0),
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "4", "dim1", "foobarbaz")).get(0),
-      PARSER.parseBatch(ImmutableMap.<String, Object>of("dim0", "5", "dim1", "foo%bar")).get(0)
+      PARSER.parseBatch(ImmutableMap.of("dim0", "0", "dim1", "")).get(0),
+      PARSER.parseBatch(ImmutableMap.of("dim0", "1", "dim1", "foo")).get(0),
+      PARSER.parseBatch(ImmutableMap.of("dim0", "2", "dim1", "foobar")).get(0),
+      PARSER.parseBatch(ImmutableMap.of("dim0", "3", "dim1", "bar")).get(0),
+      PARSER.parseBatch(ImmutableMap.of("dim0", "4", "dim1", "foobarbaz")).get(0),
+      PARSER.parseBatch(ImmutableMap.of("dim0", "5", "dim1", "foo%bar")).get(0)
   );
 
   public LikeFilterTest(
@@ -156,10 +157,17 @@ public class LikeFilterTest extends BaseFilterTest
   @Test
   public void testMatchEmptyStringWithExtractionFn()
   {
-    assertFilterMatches(
-        new LikeDimFilter("dim1", "", null, new SubstringDimExtractionFn(100, 1)),
-        ImmutableList.of("0", "1", "2", "3", "4", "5")
-    );
+    if (NullHandling.replaceWithDefault()) {
+      assertFilterMatches(
+          new LikeDimFilter("dim1", "", null, new SubstringDimExtractionFn(100, 1)),
+          ImmutableList.of("0", "1", "2", "3", "4", "5")
+      );
+    } else {
+      assertFilterMatches(
+          new LikeDimFilter("dim1", "", null, new SubstringDimExtractionFn(100, 1)),
+          ImmutableList.of()
+      );
+    }
   }
 
   @Test

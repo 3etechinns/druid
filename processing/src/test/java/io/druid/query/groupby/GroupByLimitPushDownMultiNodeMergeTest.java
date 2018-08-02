@@ -62,7 +62,6 @@ import io.druid.query.QueryWatcher;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
 import io.druid.query.dimension.DefaultDimensionSpec;
-import io.druid.query.dimension.DimensionSpec;
 import io.druid.query.dimension.ExtractionDimensionSpec;
 import io.druid.query.expression.TestExprMacroTable;
 import io.druid.query.extraction.TimeFormatExtractionFn;
@@ -507,18 +506,30 @@ public class GroupByLimitPushDownMultiNodeMergeTest
         .setDataSource("blah")
         .setQuerySegmentSpec(intervalSpec)
         .setVirtualColumns(
-            new ExpressionVirtualColumn("d0:v", "timestamp_extract(\"__time\",'YEAR','UTC')", ValueType.LONG, TestExprMacroTable.INSTANCE),
-            new ExpressionVirtualColumn("d1:v", "timestamp_extract(\"__time\",'MONTH','UTC')", ValueType.LONG, TestExprMacroTable.INSTANCE),
-            new ExpressionVirtualColumn("d2:v", "timestamp_extract(\"__time\",'DAY','UTC')", ValueType.LONG, TestExprMacroTable.INSTANCE)
+            new ExpressionVirtualColumn(
+                "d0:v",
+                "timestamp_extract(\"__time\",'YEAR','UTC')",
+                ValueType.LONG,
+                TestExprMacroTable.INSTANCE
+            ),
+            new ExpressionVirtualColumn(
+                "d1:v",
+                "timestamp_extract(\"__time\",'MONTH','UTC')",
+                ValueType.LONG,
+                TestExprMacroTable.INSTANCE
+            ),
+            new ExpressionVirtualColumn(
+                "d2:v",
+                "timestamp_extract(\"__time\",'DAY','UTC')",
+                ValueType.LONG,
+                TestExprMacroTable.INSTANCE
+            )
         )
-        .setDimensions(Lists.<DimensionSpec>newArrayList(
+        .setDimensions(
             new DefaultDimensionSpec("d0:v", "d0", ValueType.LONG),
             new DefaultDimensionSpec("d1:v", "d1", ValueType.LONG),
             new DefaultDimensionSpec("d2:v", "d2", ValueType.LONG)
-        ))
-        .setAggregatorSpecs(
-            Arrays.asList(new CountAggregatorFactory("a0"))
-        )
+        ).setAggregatorSpecs(new CountAggregatorFactory("a0"))
         .setLimitSpec(
             ls2
         )
@@ -561,7 +572,7 @@ public class GroupByLimitPushDownMultiNodeMergeTest
         "d2", 13L,
         "a0", 2L
     );
-
+    System.out.println(results);
     Assert.assertEquals(4, results.size());
     Assert.assertEquals(expectedRow0, results.get(0));
     Assert.assertEquals(expectedRow1, results.get(1));
@@ -618,7 +629,7 @@ public class GroupByLimitPushDownMultiNodeMergeTest
         .builder()
         .setDataSource("blah")
         .setQuerySegmentSpec(intervalSpec)
-        .setDimensions(Lists.<DimensionSpec>newArrayList(
+        .setDimensions(
             new DefaultDimensionSpec("dimA", "dimA"),
             new ExtractionDimensionSpec(
                 Column.TIME_COLUMN_NAME,
@@ -632,10 +643,8 @@ public class GroupByLimitPushDownMultiNodeMergeTest
                     true
                 )
             )
-        ))
-        .setAggregatorSpecs(
-            Arrays.asList(new LongSumAggregatorFactory("metASum", "metA"))
         )
+        .setAggregatorSpecs(new LongSumAggregatorFactory("metASum", "metA"))
         .setLimitSpec(
             new DefaultLimitSpec(
                 Arrays.asList(

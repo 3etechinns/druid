@@ -87,7 +87,7 @@ public class IndexGeneratorCombinerTest
                 HadoopDruidIndexerConfig.JSON_MAPPER
             ),
             new HadoopIOConfig(
-                ImmutableMap.<String, Object>of(
+                ImmutableMap.of(
                     "paths",
                     "/tmp/dummy",
                     "type",
@@ -127,7 +127,7 @@ public class IndexGeneratorCombinerTest
     BytesWritable key = new BytesWritable(StringUtils.toUtf8("dummy_key"));
     BytesWritable val = new BytesWritable(StringUtils.toUtf8("dummy_row"));
 
-    combiner.reduce(key, Lists.newArrayList(val), context);
+    combiner.reduce(key, Collections.singletonList(val), context);
 
     Assert.assertTrue(captureKey.getValue() == key);
     Assert.assertTrue(captureVal.getValue() == val);
@@ -158,8 +158,8 @@ public class IndexGeneratorCombinerTest
 
     InputRow row1 = new MapBasedInputRow(
         timestamp,
-        ImmutableList.<String>of("keywords"),
-        ImmutableMap.<String, Object>of(
+        ImmutableList.of("keywords"),
+        ImmutableMap.of(
             "host", "host1",
             "keywords", Arrays.asList("foo", "bar"),
             "visited", 10
@@ -167,8 +167,8 @@ public class IndexGeneratorCombinerTest
     );
     InputRow row2 = new MapBasedInputRow(
         timestamp,
-        ImmutableList.<String>of("keywords"),
-        ImmutableMap.<String, Object>of(
+        ImmutableList.of("keywords"),
+        ImmutableMap.of(
             "host", "host2",
             "keywords", Arrays.asList("foo", "bar"),
             "visited", 5
@@ -224,8 +224,8 @@ public class IndexGeneratorCombinerTest
 
     InputRow row1 = new MapBasedInputRow(
         timestamp,
-        ImmutableList.<String>of("host", "keywords"),
-        ImmutableMap.<String, Object>of(
+        ImmutableList.of("host", "keywords"),
+        ImmutableMap.of(
             "host", "host1",
             "keywords", Arrays.asList("foo", "bar"),
             "visited", 10
@@ -233,8 +233,8 @@ public class IndexGeneratorCombinerTest
     );
     InputRow row2 = new MapBasedInputRow(
         timestamp,
-        ImmutableList.<String>of("host", "keywords"),
-        ImmutableMap.<String, Object>of(
+        ImmutableList.of("host", "keywords"),
+        ImmutableMap.of(
             "host", "host2",
             "keywords", Arrays.asList("foo", "bar"),
             "visited", 5

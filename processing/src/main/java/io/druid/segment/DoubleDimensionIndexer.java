@@ -36,7 +36,7 @@ import java.util.Objects;
 
 public class DoubleDimensionIndexer implements DimensionIndexer<Double, Double, Double>
 {
-  public static final Comparator<Double> DOUBLE_COMPARATOR = Comparators.<Double>naturalNullsFirst();
+  public static final Comparator<Double> DOUBLE_COMPARATOR = Comparators.naturalNullsFirst();
 
   @Override
   public Double processRowValsToUnsortedEncodedKeyComponent(Object dimValues, boolean reportParseExceptions)
@@ -44,9 +44,7 @@ public class DoubleDimensionIndexer implements DimensionIndexer<Double, Double, 
     if (dimValues instanceof List) {
       throw new UnsupportedOperationException("Numeric columns do not support multivalue rows.");
     }
-    Double ret = DimensionHandlerUtils.convertObjectToDouble(dimValues, reportParseExceptions);
-    // remove null -> zero conversion when https://github.com/druid-io/druid/pull/5278 series of patches is merged
-    return ret == null ? DimensionHandlerUtils.ZERO_DOUBLE : ret;
+    return DimensionHandlerUtils.convertObjectToDouble(dimValues, reportParseExceptions);
   }
 
   @Override

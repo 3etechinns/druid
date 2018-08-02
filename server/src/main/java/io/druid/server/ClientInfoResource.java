@@ -107,7 +107,7 @@ public class ClientInfoResource
     for (DruidServer server : serverInventoryView.getInventory()) {
       for (DruidDataSource dataSource : server.getDataSources()) {
         if (!dataSourceMap.containsKey(dataSource.getName())) {
-          dataSourceMap.put(dataSource.getName(), Lists.<DataSegment>newArrayList());
+          dataSourceMap.put(dataSource.getName(), Lists.newArrayList());
         }
         List<DataSegment> segments = dataSourceMap.get(dataSource.getName());
         segments.addAll(dataSource.getSegments());
@@ -121,7 +121,7 @@ public class ClientInfoResource
   public Iterable<String> getDataSources(@Context final HttpServletRequest request)
   {
     Function<String, Iterable<ResourceAction>> raGenerator = datasourceName -> {
-      return Lists.newArrayList(AuthorizationUtils.DATASOURCE_READ_RA_GENERATOR.apply(datasourceName));
+      return Collections.singletonList(AuthorizationUtils.DATASOURCE_READ_RA_GENERATOR.apply(datasourceName));
     };
 
     return AuthorizationUtils.filterAuthorizedResources(
@@ -143,7 +143,7 @@ public class ClientInfoResource
   )
   {
     if (full == null) {
-      return ImmutableMap.<String, Object>of(
+      return ImmutableMap.of(
           KEY_DIMENSIONS, getDatasourceDimensions(dataSourceName, interval),
           KEY_METRICS, getDatasourceMetrics(dataSourceName, interval)
       );

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.ListenableFuture;
 import io.druid.client.cache.Cache;
 import io.druid.client.cache.CacheConfig;
 import io.druid.client.cache.CachePopulator;
@@ -37,8 +38,10 @@ import io.druid.query.QueryToolChest;
 import io.druid.query.SegmentDescriptor;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class CachingQueryRunner<T> implements QueryRunner<T>
@@ -131,6 +134,7 @@ public class CachingQueryRunner<T> implements QueryRunner<T>
       }
     }
 
+    final Collection<ListenableFuture<?>> cacheFutures = Collections.synchronizedList(new LinkedList<>());
     if (populateCache) {
       final Function cacheFn = strategy.prepareForSegmentLevelCache();
       return cachePopulator.wrap(base.run(queryPlus, responseContext), value -> cacheFn.apply(value), cache, key);

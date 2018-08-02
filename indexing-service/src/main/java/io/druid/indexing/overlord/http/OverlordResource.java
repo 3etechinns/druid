@@ -44,6 +44,7 @@ import io.druid.indexer.TaskStatusPlus;
 import io.druid.indexing.common.actions.TaskActionClient;
 import io.druid.indexing.common.actions.TaskActionHolder;
 import io.druid.indexing.common.task.Task;
+import io.druid.indexing.common.task.Tasks;
 import io.druid.indexing.overlord.IndexerMetadataStorageAdapter;
 import io.druid.indexing.overlord.TaskMaster;
 import io.druid.indexing.overlord.TaskQueue;
@@ -96,6 +97,7 @@ import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,6 +177,11 @@ public class OverlordResource
           public Response apply(TaskQueue taskQueue)
           {
             try {
+              // Set default priority if needed
+              final Integer priority = task.getContextValue(Tasks.PRIORITY_KEY);
+              if (priority == null) {
+                task.addToContext(Tasks.PRIORITY_KEY, task.getDefaultPriority());
+              }
               taskQueue.add(task);
               return Response.ok(ImmutableMap.of("task", task.getId())).build();
             }
@@ -652,7 +659,7 @@ public class OverlordResource
         null
     );
 
-    Function<TaskInfo<Task>, TaskStatusPlus> completeTaskTransformFunc = taskInfo -> new TaskStatusPlus(
+    Function<TaskInfo<Task, TaskStatus>, TaskStatusPlus> completeTaskTransformFunc = taskInfo -> new TaskStatusPlus(
         taskInfo.getId(),
         taskInfo.getTask() == null ? null : taskInfo.getTask().getType(),
         taskInfo.getCreatedTime(),
@@ -674,18 +681,18 @@ public class OverlordResource
         final Interval theInterval = Intervals.of(interval.replace("_", "/"));
         duration = theInterval.toDuration();
       }
-      final List<TaskInfo<Task>> taskInfoList = taskStorageQueryAdapter.getRecentlyCompletedTaskInfo(
+      final List<TaskInfo<Task, TaskStatus>> taskInfoList = taskStorageQueryAdapter.getRecentlyCompletedTaskInfo(
           maxCompletedTasks, duration, dataSource
       );
       final List<TaskStatusPlus> completedTasks = Lists.transform(taskInfoList, completeTaskTransformFunc);
       finalTaskList.addAll(completedTasks);
     }
 
-    List<TaskInfo<Task>> allActiveTaskInfo = Lists.newArrayList();
+    final List<TaskInfo<Task, TaskStatus>> allActiveTaskInfo;
     final List<AnyTask> allActiveTasks = Lists.newArrayList();
     if (state == null || !"complete".equals(StringUtils.toLowerCase(state))) {
-      allActiveTaskInfo = taskStorageQueryAdapter.getActiveTaskInfo();
-      for (final TaskInfo<Task> task : allActiveTaskInfo) {
+      allActiveTaskInfo = taskStorageQueryAdapter.getActiveTaskInfo(dataSource);
+      for (final TaskInfo<Task, TaskStatus> task : allActiveTaskInfo) {
         allActiveTasks.add(
             new AnyTask(
                 task.getId(),
@@ -694,7 +701,7 @@ public class OverlordResource
                 task.getDataSource(),
                 null,
                 null,
-                DateTimes.EPOCH,
+                task.getCreatedTime(),
                 DateTimes.EPOCH,
                 TaskLocation.unknown()
             ));
@@ -999,11 +1006,8 @@ public class OverlordResource
             ).build()
         );
       }
-      return Lists.newArrayList(
-          new ResourceAction(
-              new Resource(taskDatasource, ResourceType.DATASOURCE),
-              Action.READ
-          )
+      return Collections.singletonList(
+          new ResourceAction(new Resource(taskDatasource, ResourceType.DATASOURCE), Action.READ)
       );
     };
     List<TaskStatusPlus> optionalTypeFilteredList = collectionToFilter;

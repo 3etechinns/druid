@@ -36,7 +36,7 @@ import java.util.Objects;
 
 public class FloatDimensionIndexer implements DimensionIndexer<Float, Float, Float>
 {
-  public static final Comparator<Float> FLOAT_COMPARATOR = Comparators.<Float>naturalNullsFirst();
+  public static final Comparator<Float> FLOAT_COMPARATOR = Comparators.naturalNullsFirst();
 
   @Override
   public Float processRowValsToUnsortedEncodedKeyComponent(Object dimValues, boolean reportParseExceptions)
@@ -45,9 +45,7 @@ public class FloatDimensionIndexer implements DimensionIndexer<Float, Float, Flo
       throw new UnsupportedOperationException("Numeric columns do not support multivalue rows.");
     }
 
-    Float ret = DimensionHandlerUtils.convertObjectToFloat(dimValues, reportParseExceptions);
-    // remove null -> zero conversion when https://github.com/druid-io/druid/pull/5278 series of patches is merged
-    return ret == null ? DimensionHandlerUtils.ZERO_FLOAT : ret;
+    return DimensionHandlerUtils.convertObjectToFloat(dimValues, reportParseExceptions);
   }
 
   @Override
