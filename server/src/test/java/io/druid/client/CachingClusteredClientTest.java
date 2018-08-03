@@ -2681,6 +2681,13 @@ public class CachingClusteredClientTest
             return timeline;
           }
 
+          @Nullable
+          @Override
+          public Map<String, QueryableDruidServer> getClients()
+          {
+            throw new UnsupportedOperationException();
+          }
+
           @Override
           public <T> QueryRunner<T> getQueryRunner(DruidServer server)
           {
