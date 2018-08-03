@@ -334,7 +334,7 @@ public class BaseColumnarIntsFromGeneratorBenchmark extends BaseColumnarIntsBenc
     } else {
       try (Writer writer = Files.newBufferedWriter(dataFile.toPath(), StandardCharsets.UTF_8)) {
         int atLeastOneMustBeAsLargeAsBound = rand.nextInt(rows);
-        if (distribution.equals("random")) {
+        if ("random".equals(distribution)) {
           for (int i = 0; i < vals.length; ++i) {
             vals[i] = rand.nextInt(bound);
             if (i == atLeastOneMustBeAsLargeAsBound) {
@@ -357,7 +357,7 @@ public class BaseColumnarIntsFromGeneratorBenchmark extends BaseColumnarIntsBenc
             value = rowValue != null ? (int) rowValue : 0;
             if (i == atLeastOneMustBeAsLargeAsBound) {
               value = bound;
-            } else if (distribution.equals("sequential-skip") && bits > 1) {
+            } else if ("sequential-skip".equals(distribution) && bits > 1) {
               int skip = Math.max(bound / cardinality, 1);
               for (int burn = 0; burn < skip; burn++) {
                 value = (int) valueGenerator.generateRowValue();
